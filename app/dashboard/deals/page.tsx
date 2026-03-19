@@ -6,7 +6,7 @@ export default function DealsPage() {
     <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
       <h1 className="text-2xl font-bold mb-2">Deals</h1>
       <p className="text-muted-foreground mb-4">
-        Your pipeline has no deals yet.
+        Your pipeline has no deals yet. Create a deal to begin managing your sales process.
       </p>
       <Button asChild>
         <Link href="/dashboard/deals/new">Add Deal</Link>
