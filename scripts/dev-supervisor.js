@@ -26,8 +26,11 @@ function parseBoolean(value, defaultValue) {
 }
 
 const NEXT_DEV = parseBoolean(nextDevRaw, true);
-const GIT_BOOTSTRAP = parseBoolean(gitBootstrapRaw, false);
-const GIT_POLL = parseBoolean(gitPollRaw, false);
+// Railway/runtime images often start without .git; when REPO_URL is provided,
+// bootstrap by default so polling has a repo to work with.
+const GIT_BOOTSTRAP = parseBoolean(gitBootstrapRaw, Boolean(REPO_URL));
+// Default on so repo-sync behavior is active unless explicitly disabled.
+const GIT_POLL = parseBoolean(gitPollRaw, true);
 
 function run(name, cmd, args, envOverrides = {}) {
   const p = spawn(cmd, args, {
@@ -56,6 +59,7 @@ function getNextCommand() {
     return { cmd: found, args: [] };
   }
 
+  // Fallback keeps the service bootable even when .bin symlinks are missing.
   console.warn(
     `[supervisor] ${binName} not found at expected paths. Falling back to 'pnpm exec next'. Tried:\n${candidates.join("\n")}`
   );
@@ -89,6 +93,8 @@ async function bootstrapGit() {
   }
 
   console.log("[supervisor] bootstrapping git repo");
+  // Intentionally no "git clean -fd": it can delete node_modules in runtime
+  // containers and cause "next not found" failures on restart.
   const cmds = [
     "git init",
     `git remote add origin ${REPO_URL}`,
