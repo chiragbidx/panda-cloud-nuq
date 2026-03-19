@@ -16,13 +16,28 @@ export const leadSchema = z.object({
 });
 
 // Helper: get teamId for current user (assumes single active membership)
+// This version has improved error handling and diagnostics.
 export async function getTeamIdForUser(userId: string): Promise<string | undefined> {
-  const membership = await db
-    .select({ teamId: teamMembers.teamId })
-    .from(teamMembers)
-    .where(eq(teamMembers.userId, userId))
-    .limit(1);
-  return membership[0]?.teamId;
+  try {
+    if (!userId) {
+      console.error("[getTeamIdForUser] userId not provided or falsy");
+      return undefined;
+    }
+    const membership = await db
+      .select({ teamId: teamMembers.teamId })
+      .from(teamMembers)
+      .where(eq(teamMembers.userId, userId))
+      .limit(1);
+
+    if (!membership?.length) {
+      console.warn(`[getTeamIdForUser] No team membership found for userId: ${userId}`);
+      return undefined;
+    }
+    return membership[0]?.teamId;
+  } catch (error) {
+    console.error(`[getTeamIdForUser] DB error for userId: ${userId}`, error);
+    return undefined;
+  }
 }
 
 // Fetch all leads for the current user's team
@@ -31,7 +46,9 @@ export async function getLeadsHelper() {
   if (!session) throw new Error("Not authenticated");
 
   const myTeamId = await getTeamIdForUser(session.userId);
-  if (!myTeamId) throw new Error("No team found");
+  if (!myTeamId) {
+    throw new Error("No team found for your user. If you just registered, please contact support.");
+  }
 
   const allLeads = await db
     .select()
@@ -48,7 +65,12 @@ export async function createLeadHelper(formData: FormData) {
   if (!session) throw new Error("Not authenticated");
 
   const myTeamId = await getTeamIdForUser(session.userId);
-  if (!myTeamId) throw new Error("No team found");
+  if (!myTeamId) {
+    return {
+      status: "error",
+      message: "No team found for your user. Please contact support.",
+    };
+  }
 
   const raw = Object.fromEntries(formData.entries());
 
@@ -79,7 +101,9 @@ export async function updateLeadHelper(id: string, formData: FormData) {
   if (!session) throw new Error("Not authenticated");
 
   const myTeamId = await getTeamIdForUser(session.userId);
-  if (!myTeamId) throw new Error("No team found");
+  if (!myTeamId) {
+    return { status: "error", message: "No team found for your user. Please contact support." };
+  }
 
   const leadRow = await db
     .select()
@@ -121,7 +145,9 @@ export async function deleteLeadHelper(id: string) {
   if (!session) throw new Error("Not authenticated");
 
   const myTeamId = await getTeamIdForUser(session.userId);
-  if (!myTeamId) throw new Error("No team found");
+  if (!myTeamId) {
+    return { status: "error", message: "No team found for your user. Please contact support." };
+  }
 
   await db.delete(leads)
     .where(and(eq(leads.id, id), eq(leads.teamId, myTeamId)));
