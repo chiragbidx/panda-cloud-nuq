@@ -6,7 +6,7 @@ export default function AddDealPage() {
     <div className="flex flex-col items-start max-w-xl">
       <h1 className="text-2xl font-bold mb-4">Add Deal</h1>
       <p className="text-muted-foreground mb-4">
-        Use this form to add a new deal (coming soon—full form in the next phase).
+        Use this form to add a new deal (full form coming soon in the next phase).
       </p>
       <Button asChild>
         <Link href="/dashboard/deals">Back to Deals</Link>
