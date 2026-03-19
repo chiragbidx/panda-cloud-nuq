@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 const BRANCH = process.env.PREVIEW_BRANCH || "main";
 const REPO_URL = process.env.REPO_URL;
 const nextDevRaw = process.env.NEXT_DEV;
+const gitBootstrapRaw = process.env.GIT_BOOTSTRAP;
+const gitPollRaw = process.env.GIT_POLL;
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 
 function resolvePort(value) {
@@ -24,6 +26,8 @@ function parseBoolean(value, defaultValue) {
 }
 
 const NEXT_DEV = parseBoolean(nextDevRaw, true);
+const GIT_BOOTSTRAP = parseBoolean(gitBootstrapRaw, false);
+const GIT_POLL = parseBoolean(gitPollRaw, false);
 
 function run(name, cmd, args, envOverrides = {}) {
   const p = spawn(cmd, args, {
@@ -72,6 +76,11 @@ function execAsync(cmd) {
 }
 
 async function bootstrapGit() {
+  if (!GIT_BOOTSTRAP) {
+    console.log("[supervisor] git bootstrap disabled (set GIT_BOOTSTRAP=true to enable)");
+    return;
+  }
+
   if (fs.existsSync(".git")) return;
 
   if (!REPO_URL) {
@@ -85,7 +94,6 @@ async function bootstrapGit() {
     `git remote add origin ${REPO_URL}`,
     "git fetch origin --depth=1",
     `git reset --hard origin/${BRANCH}`,
-    "git clean -fd",
   ];
 
   for (const cmd of cmds) {
@@ -134,7 +142,11 @@ bootstrapGit().catch((err) => {
   console.error(`[supervisor] git bootstrap failed:\n${message}`);
 });
 
-setTimeout(() => {
-  console.log("[supervisor] starting git poller");
-  run("git-poll", "node", ["scripts/git-poll.js"]);
-}, 30_000);
+if (GIT_POLL) {
+  setTimeout(() => {
+    console.log("[supervisor] starting git poller");
+    run("git-poll", "node", ["scripts/git-poll.js"]);
+  }, 30_000);
+} else {
+  console.log("[supervisor] git poller disabled (set GIT_POLL=true to enable)");
+}
