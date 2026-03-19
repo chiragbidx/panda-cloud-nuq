@@ -1,9 +1,8 @@
 "use client";
 
-import { DashboardContent } from "@/components/dashboard/dashboard-content";
-
-// Purpose: Client UI for /dashboard.
-// Use this file for interactive/dashboard presentation logic.
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type ClientProps = {
   greeting: string;
@@ -12,9 +11,26 @@ type ClientProps = {
 
 export default function Client({ greeting, firstName }: ClientProps) {
   return (
-    <DashboardContent
-      greeting={greeting}
-      firstName={firstName}
-    />
+    <div className="flex flex-col gap-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-3xl font-semibold tracking-tight">
+            Welcome to LeadNest
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-lg">
+            {greeting}, {firstName}! <br />
+            Your workspace for building relationships and closing more deals.
+          </p>
+          <p className="text-muted-foreground">
+            Invite your team to collaborate and grow together.
+          </p>
+          <Button asChild>
+            <Link href="/dashboard/leads">Add Lead</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
