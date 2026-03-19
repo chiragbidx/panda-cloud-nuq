@@ -7,8 +7,6 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 
 // Purpose: Server route entry for /dashboard.
-// Keep auth checks and database reads in this file,
-// then pass prepared props into `client.tsx`.
 
 function getGreeting(): string {
   const hour = new Date().getHours();
