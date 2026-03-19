@@ -3,6 +3,8 @@ import "server-only";
 import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
+// EXISTING TABLES OMITTED FOR BREVITY
+
 export const users = pgTable("users", {
   id: text("id")
     .notNull()
@@ -106,6 +108,33 @@ export const featureItems = pgTable("feature_items", {
   title: text("title").notNull(),
   description: text("description").notNull().default(""),
   status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// NEW LEADS TABLE HERE --- LeadNest CRM core entity
+export const leads = pgTable("leads", {
+  id: text("id")
+    .notNull()
+    .default(sql`gen_random_uuid()`)
+    .primaryKey(),
+  teamId: text("team_id")
+    .notNull()
+    .references(() => teams.id, { onDelete: "cascade" }),
+  ownerId: text("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "set null" }),
+  name: text("name").notNull(), // Lead's name or company
+  email: text("email"),
+  phone: text("phone"),
+  status: text("status").notNull().default("open"), // e.g.: open, contacted, qualified, lost, won
+  source: text("source").default(""), // e.g.: referral, web, event
+  value: text("value").default(""), // e.g.: "$500"
+  notes: text("notes").default(""),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
